@@ -11,15 +11,6 @@ from sys import argv, exit, platform
 import openai
 import os
 
-quiet = False
-if len(argv) >= 2:
-	if argv[1] == '-q' or argv[1] == '--quiet':
-		quiet = True
-		print(
-			"Running in quiet mode (HTML and other content hidden); \n"
-			+ "exercise caution when running suggested commands."
-		)
-
 prompt_template = """
 You are an agent controlling a browser. You are given:
 
@@ -168,10 +159,17 @@ class Crawler:
 			.chromium.launch(
 				headless=False,
 			)
+			.new_context()
 		)
 
 		self.page = self.browser.new_page()
 		self.page.set_viewport_size({"width": 1280, "height": 1080})
+
+	def start_trace_action(self):
+		self.browser.tracing.start(screenshots=True, snapshots=True)
+
+	def end_trace_action(self):
+		self.browser.tracing.stop(path="trace.zip")
 
 	def go_to_page(self, url):
 		self.page.goto(url=url if "://" in url else "http://" + url)
@@ -219,12 +217,13 @@ class Crawler:
 		page_element_buffer = self.page_element_buffer
 		start = time.time()
 
-		page_state_as_text = []
+		# page_state_as_text = []
 
 		device_pixel_ratio = page.evaluate("window.devicePixelRatio")
 		if platform == "darwin" and device_pixel_ratio == 1:  # lies
 			device_pixel_ratio = 2
 
+		# Get the current window size
 		win_scroll_x 		= page.evaluate("window.scrollX")
 		win_scroll_y 		= page.evaluate("window.scrollY")
 		win_upper_bound 	= page.evaluate("window.pageYOffset")
@@ -240,19 +239,21 @@ class Crawler:
 #		percentage_progress_end = (
 #			(win_height + win_upper_bound) / document_scroll_height
 #		) * 100
-		percentage_progress_start = 1
-		percentage_progress_end = 2
+		# percentage_progress_start = 1
+		# percentage_progress_end = 2
 
-		page_state_as_text.append(
-			{
-				"x": 0,
-				"y": 0,
-				"text": "[scrollbar {:0.2f}-{:0.2f}%]".format(
-					round(percentage_progress_start, 2), round(percentage_progress_end)
-				),
-			}
-		)
+		# page_state_as_text.append(
+		# 	{
+		# 		"x": 0,
+		# 		"y": 0,
+		# 		"text": "[scrollbar {:0.2f}-{:0.2f}%]".format(
+		# 			round(percentage_progress_start, 2), round(percentage_progress_end)
+		# 		),
+		# 	}
+		# )
 
+
+		# Get the current page content
 		tree = self.client.send(
 			"DOMSnapshot.captureSnapshot",
 			{"computedStyles": [], "includeDOMRects": True, "includePaintOrder": True},
@@ -538,12 +539,47 @@ class Crawler:
 
 		print("Parsing time: {:0.2f} seconds".format(time.time() - start))
 		return elements_of_interest
+	
+def write_file(filename, text):
+	try:
+		with open(filename,"w", encoding="utf-8") as f:
+			f.write(text)
+	except Exception as e:
+		print(e)
+		print("write failed.")
+
+def read_file(filename):
+	try:
+		with open(filename,"r", encoding="utf-8") as f:
+			content = f.read()
+		return content
+	except Exception as e:
+		print(e)
+		print("read failed.")
+
+def write_json(filename, json):
+	try:
+		import json
+		with open(filename,"w") as f:
+			json.dump(json, f, indent = 4)
+	except Exception as e:
+		print(e)
+		print("write ok.")
+
+quiet = False
+if len(argv) >= 2:
+	if argv[1] == '-q' or argv[1] == '--quiet':
+		quiet = True
+		print(
+			"Running in quiet mode (HTML and other content hidden); \n"
+			+ "exercise caution when running suggested commands."
+		)
 
 if (
 	__name__ == "__main__"
 ):
 	_crawler = Crawler()
-	openai.api_key = os.environ.get("OPENAI_API_KEY")
+	openai.api_key = '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'
 
 	def print_help():
 		print(
@@ -552,12 +588,36 @@ if (
 		)
 
 	def get_gpt_command(objective, url, previous_command, browser_content):
-		prompt = prompt_template
+		
+		# prompt = prompt_template
+		prompt = read_file("prompt_template.txt")
 		prompt = prompt.replace("$objective", objective)
 		prompt = prompt.replace("$url", url[:100])
 		prompt = prompt.replace("$previous_command", previous_command)
 		prompt = prompt.replace("$browser_content", browser_content[:4500])
-		response = openai.Completion.create(model="text-davinci-002", prompt=prompt, temperature=0.5, best_of=10, n=3, max_tokens=50)
+		# print("\n\n prompt template:" + prompt + "\n\n")
+		# write_file("gpt_promte.txt", prompt)
+		#response = openai.Completion.create(model="text-davinci-003", prompt=prompt, temperature=0.5, best_of=10, n=3, max_tokens=50)
+		
+		gpt_formal_response = openai.ChatCompletion.create(
+			model="gpt-3.5-turbo",
+			messages=[
+					{"role": "system", "content": "你是一個自動化機器人."},
+					{"role": "user", "content": f"{prompt}"}
+				]
+			)
+		print(gpt_formal_response)
+		gpt_formal = gpt_formal_response.to_dict()['choices'][0]['message']['content']
+		# print(response)
+		# try:
+		# 	import json
+		# 	json_data = json.loads(response)
+		# 	print(json_data)
+		# 	# write_file("gpt_respond.txt",json_data)
+		# except Exception as e:
+		# 	print("json" + e)
+		# write_json("gpt_respond.json", response)
+		return gpt_formal
 		return response.choices[0].text
 
 	def run_cmd(cmd):
@@ -593,13 +653,17 @@ if (
 
 	gpt_cmd = ""
 	prev_cmd = ""
+	_crawler.start_trace_action()
 	_crawler.go_to_page("google.com")
 	try:
 		while True:
 			browser_content = "\n".join(_crawler.crawl())
+			#print(browser_content)
 			prev_cmd = gpt_cmd
 			gpt_cmd = get_gpt_command(objective, _crawler.page.url, prev_cmd, browser_content)
 			gpt_cmd = gpt_cmd.strip()
+			# exit()
+
 
 			if not quiet:
 				print("URL: " + _crawler.page.url)
@@ -635,5 +699,8 @@ if (
 			else:
 				print_help()
 	except KeyboardInterrupt:
+		_crawler.end_trace_action()
 		print("\n[!] Ctrl+C detected, exiting gracefully.")
 		exit(0)
+	except:
+		_crawler.end_trace_action()
