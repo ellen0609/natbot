@@ -566,6 +566,29 @@ def write_json(filename, json):
 		print(e)
 		print("write ok.")
 
+
+def chatGPT(prompt):
+		from revChatGPT.V1 import Chatbot
+		import configparser
+		config = configparser.ConfigParser()
+		config.read('config.ini')
+
+		chatbot = Chatbot(config={
+			"access_token": config['chatGPT']['access_token'],
+			"conversation_id": config['chatGPT']['conversation_id'],
+			# "parent_id": config['chatGPT']['parent_id'],
+			# "proxy": config['chatGPT']['proxy'],
+			"model": config['chatGPT']['model'], # gpt-4-browsing, text-davinci-002-render-sha, gpt-4, gpt-4-plugins
+			# "plugin_ids" : [config['chatGPT']['plugin_ids']],   # Wolfram Alpha example
+			# "disable_history": [config['chatGPT']['disable_history']],
+		})
+		
+		for data in chatbot.ask(prompt):
+			response = data["message"]
+
+		return response
+
+
 quiet = False
 if len(argv) >= 2:
 	if argv[1] == '-q' or argv[1] == '--quiet':
@@ -579,7 +602,7 @@ if (
 	__name__ == "__main__"
 ):
 	_crawler = Crawler()
-	openai.api_key = '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'
+	openai.api_key = os.environ.get('OPENAI_API_KEY')
 
 	def print_help():
 		print(
@@ -588,38 +611,16 @@ if (
 		)
 
 	def get_gpt_command(objective, url, previous_command, browser_content):
-		
 		# prompt = prompt_template
 		prompt = read_file("prompt_template.txt")
 		prompt = prompt.replace("$objective", objective)
 		prompt = prompt.replace("$url", url[:100])
 		prompt = prompt.replace("$previous_command", previous_command)
 		prompt = prompt.replace("$browser_content", browser_content[:4500])
-		# print("\n\n prompt template:" + prompt + "\n\n")
-		# write_file("gpt_promte.txt", prompt)
-		#response = openai.Completion.create(model="text-davinci-003", prompt=prompt, temperature=0.5, best_of=10, n=3, max_tokens=50)
 		
-		gpt_formal_response = openai.ChatCompletion.create(
-			model="gpt-3.5-turbo",
-			messages=[
-					{"role": "system", "content": "你是一個自動化機器人."},
-					{"role": "user", "content": f"{prompt}"}
-				]
-			)
-		print(gpt_formal_response)
-		gpt_formal = gpt_formal_response.to_dict()['choices'][0]['message']['content']
-		# print(response)
-		# try:
-		# 	import json
-		# 	json_data = json.loads(response)
-		# 	print(json_data)
-		# 	# write_file("gpt_respond.txt",json_data)
-		# except Exception as e:
-		# 	print("json" + e)
-		# write_json("gpt_respond.json", response)
-		return gpt_formal
-		return response.choices[0].text
-
+		chatGPT_response = chatGPT(prompt)
+		return chatGPT_response
+	
 	def run_cmd(cmd):
 		cmd = cmd.split("\n")[0]
 
