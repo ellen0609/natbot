@@ -30,15 +30,6 @@ def read_file(filename):
 		print(e)
 		print("read failed.")
 
-def write_json(filename, json):
-	try:
-		import json
-		with open(filename,"w") as f:
-			json.dump(json, f, indent = 4)
-	except Exception as e:
-		print(e)
-		print("write ok.")
-
 def chatGPT(prompt):
 	config = configparser.ConfigParser()
 	config.read('config.ini')
@@ -71,7 +62,7 @@ def get_gpt_command(objective, url, previous_command, browser_content):
 	chatGPT_response = chatGPT(prompt)
 	return chatGPT_response
 
-def run_cmd(cmd):
+def run_cmd(cmd, _crawler):
 	cmd = cmd.split("\n")[0]
 
 	if cmd.startswith("SCROLL UP"):
@@ -136,18 +127,17 @@ if (__name__ == "__main__"):
 			gpt_cmd = gpt_cmd.strip()
 			# exit()
 
-
 			if not quiet:
 				print("URL: " + _crawler.page.url)
 				print("Objective: " + objective)
 				print("----------------\n" + browser_content + "\n----------------\n")
 			if len(gpt_cmd) > 0:
 				print("Suggested command: " + gpt_cmd)
-
-
+			
+			print_help()
 			command = input()
 			if command == "r" or command == "":
-				run_cmd(gpt_cmd)
+				run_cmd(gpt_cmd, _crawler)
 			elif command == "g":
 				url = input("URL:")
 				_crawler.go_to_page(url)
@@ -174,5 +164,6 @@ if (__name__ == "__main__"):
 		_crawler.end_trace_action()
 		print("\n[!] Ctrl+C detected, exiting gracefully.")
 		exit(0)
-	except:
+	except Exception as e:
+		print(e)
 		_crawler.end_trace_action()
