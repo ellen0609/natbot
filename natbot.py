@@ -51,7 +51,7 @@ def chatGPT(prompt):
 
 def get_gpt_command(objective, url, previous_command, browser_content):
 	# prompt = prompt_template
-	prompt = read_file("prompt_template.txt")
+	prompt = read_file("natbot_prompt_template.txt")
 	prompt = prompt.replace("$objective", objective)
 	prompt = prompt.replace("$url", url[:100])
 	prompt = prompt.replace("$previous_command", previous_command)
@@ -122,6 +122,7 @@ if (__name__ == "__main__"):
 		while True:
 			browser_content = "\n".join(_crawler.crawl())
 			#print(browser_content)
+			#break
 			prev_cmd = gpt_cmd
 			gpt_cmd = get_gpt_command(objective, _crawler.page.url, prev_cmd, browser_content)
 			gpt_cmd = gpt_cmd.strip()

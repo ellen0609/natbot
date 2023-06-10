@@ -111,6 +111,7 @@ class Crawler:
 			"DOMSnapshot.captureSnapshot",
 			{"computedStyles": [], "includeDOMRects": True, "includePaintOrder": True},
 		)
+		
 		strings	 	= tree["strings"]
 		document 	= tree["documents"][0]
 		nodes 		= document["nodes"]
@@ -151,9 +152,9 @@ class Crawler:
 				return "input"
 			if node_name == "img":
 				return "img"
-			if (
-				node_name == "button" or has_click_handler
-			):  # found pages that needed this quirk
+			if node_name == "textarea":
+				return "textarea"
+			if (node_name == "button" or has_click_handler):  # found pages that needed this quirk
 				return "button"
 			else:
 				return "text"
