@@ -1,7 +1,7 @@
 from playwright.sync_api import sync_playwright
 from sys import argv, exit, platform
 
-import time
+import time, os
 black_listed_elements = set(["html", "head", "title", "meta", "iframe", "body", "script", "style", "path", "svg", "br", "::marker",])
 
 class Crawler:
@@ -21,8 +21,15 @@ class Crawler:
 	def start_trace_action(self):
 		self.browser.tracing.start(screenshots=True, snapshots=True)
 
-	def end_trace_action(self):
-		self.browser.tracing.stop(path="trace.zip")
+	def end_trace_action(self, directory_path, objective):
+		self.browser.tracing.stop(path=os.path.join(directory_path, f"{objective}_trace.zip"))
+
+	def fetch_screenshot(self, directory_path, objective, record_id):
+		directory = os.path.join(directory_path, objective)  # 取得目錄路徑
+		if not os.path.exists(directory):
+				os.makedirs(directory)
+		screenshot_path = os.path.join(directory, f"{objective}-screenshot-{record_id}.png")
+		self.page.screenshot(path=screenshot_path)
 
 	def go_to_page(self, url):
 		self.page.goto(url=url if "://" in url else "http://" + url)

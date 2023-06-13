@@ -9,9 +9,9 @@ from playwright.sync_api import sync_playwright
 from sys import argv, exit, platform
 from revChatGPT.V1 import Chatbot
 from Cawler import Crawler
+from ChatGPTRecord import ChatGPTRecord
 
 import configparser, time
-
 	
 def write_file(filename, text):
 	try:
@@ -36,7 +36,7 @@ def chatGPT(prompt):
 
 	chatbot = Chatbot(config={
 		"access_token": config['chatGPT']['access_token'],
-		"conversation_id": config['chatGPT']['conversation_id'],
+		# "conversation_id": config['chatGPT']['conversation_id'],
 		# "parent_id": config['chatGPT']['parent_id'],
 		# "proxy": config['chatGPT']['proxy'],
 		"model": config['chatGPT']['model'], # gpt-4-browsing, text-davinci-002-render-sha, gpt-4, gpt-4-plugins
@@ -47,20 +47,19 @@ def chatGPT(prompt):
 	for data in chatbot.ask(prompt):
 		response = data["message"]
 
+	chatbot.delete_conversation(chatbot.conversation_id)
+	
 	return response
 
-def get_gpt_command(objective, url, previous_command, browser_content):
+def get_gpt_prompt(objective, url, previous_command, browser_content):
 	# prompt = prompt_template
-	prompt = read_file("natbot_prompt_template.txt")
+	prompt = read_file("./prompt_template/natbot_prompt_template.txt")
 	prompt = prompt.replace("$objective", objective)
 	prompt = prompt.replace("$url", url[:100])
 	prompt = prompt.replace("$previous_command", previous_command)
 	prompt = prompt.replace("$browser_content", browser_content[:4500])
 	
-	write_file('gpt_prompt.txt', prompt)
-
-	chatGPT_response = chatGPT(prompt)
-	return chatGPT_response
+	return prompt
 
 def run_cmd(cmd, _crawler):
 	cmd = cmd.split("\n")[0]
@@ -104,7 +103,6 @@ if len(argv) >= 2:
 
 if (__name__ == "__main__"):
 	_crawler = Crawler()
-
 	objective = "Make a reservation for 2 at 7pm at bistro vida in menlo park"
 	print("\nWelcome to natbot! What is your objective?")
 
@@ -114,31 +112,35 @@ if (__name__ == "__main__"):
 		objective = i
 
 	# init state
-	gpt_cmd = ""
-	prev_cmd = ""
+	gpt_response = ""
+	prev_response = ""
+	chatGPTRecord = ChatGPTRecord(objective)
 	_crawler.start_trace_action() # playwright trace automation
 	_crawler.go_to_page("google.com")
 	try:
 		while True:
 			browser_content = "\n".join(_crawler.crawl())
+			_crawler.fetch_screenshot(chatGPTRecord.filepath, chatGPTRecord.objective, chatGPTRecord.id)
 			#print(browser_content)
 			#break
-			prev_cmd = gpt_cmd
-			gpt_cmd = get_gpt_command(objective, _crawler.page.url, prev_cmd, browser_content)
-			gpt_cmd = gpt_cmd.strip()
+			prev_response = gpt_response
+			gpt_prompt = get_gpt_prompt(objective, _crawler.page.url, prev_response, browser_content)
+			gpt_response = chatGPT(gpt_prompt)
+			gpt_response = gpt_response.strip()
+			chatGPTRecord.add_record(gpt_prompt, gpt_response)
 			# exit()
 
 			if not quiet:
 				print("URL: " + _crawler.page.url)
 				print("Objective: " + objective)
 				print("----------------\n" + browser_content + "\n----------------\n")
-			if len(gpt_cmd) > 0:
-				print("Suggested command: " + gpt_cmd)
+			if len(gpt_response) > 0:
+				print("Suggested command: " + gpt_response)
 			
 			print_help()
 			command = input()
 			if command == "r" or command == "":
-				run_cmd(gpt_cmd, _crawler)
+				run_cmd(gpt_response, _crawler)
 			elif command == "g":
 				url = input("URL:")
 				_crawler.go_to_page(url)
@@ -162,9 +164,13 @@ if (__name__ == "__main__"):
 			else:
 				print_help()
 	except KeyboardInterrupt:
-		_crawler.end_trace_action()
+		_crawler.end_trace_action(chatGPTRecord.filepath, chatGPTRecord.objective)
 		print("\n[!] Ctrl+C detected, exiting gracefully.")
+		chatGPTRecord.convert_to_text()
 		exit(0)
 	except Exception as e:
 		print(e)
-		_crawler.end_trace_action()
+		if("code: 500" in str(e)):
+			chatGPTRecord.add_record(gpt_prompt, "OpenAI:  (code: 500)")
+		chatGPTRecord.convert_to_text()
+		_crawler.end_trace_action(chatGPTRecord.filepath, chatGPTRecord.objective)

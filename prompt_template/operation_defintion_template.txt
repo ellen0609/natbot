@@ -1,0 +1,130 @@
+
+Example1: (from ChatGPT template)
+OBJECTIVE: order food, given operational definition
+-----------------------
+Operational Definition
+1. Find a food delivery platform: 
+    TYPE 8 "food delivery platform" 
+    - Enter "food delivery platform" into the input field with id 8 to search for food delivery platforms.
+2. Submit the search: TYPESUBMIT 8 "food delivery platform" 
+    - After entering "food delivery platform" in the input field, press Enter to submit the search.
+3. Choose a restaurant: CLICK X 
+    - Click on the restaurant you want to order from. You need to provide the id of the restaurant.
+4. Browse the menu: CLICK X 
+    - Click on the menu button to browse the restaurant's menu. You need to provide the id of the menu button.
+5. Select dishes: CLICK X 
+    - Click on the dishes you want to order to select them. You need to provide the id of the dish.
+6. Confirm the order: CLICK X 
+    - Click on the confirm order button to finalize your order. You need to provide the id of the confirm order button.
+7. Provide delivery information: TYPE X "delivery information" 
+    - Enter the required delivery information, such as address and contact details, in the input field with id X.
+8. Submit the order: CLICK X 
+   - Click on the submit order button to place your order. You need to provide the id of the submit order button.
+
+Please note that the above operational definition is a general guideline, and the specific steps may vary depending on the food delivery platform or website you are using. Adapt these instructions according to the actual website or platform you are using.
+
+Example2: (from ChatGPT template)
+OBJECTIVE: order food, given operational definition using JSON format
+----------
+Sure! Here's an example of the operational definition for ordering food in JSON format:
+{
+  "objective": "order food",
+  "commands": [
+    {
+      "command": "type",
+      "target": 8,
+      "text": "food delivery platform"
+    },
+    {
+      "command": "typesubmit",
+      "target": 8,
+      "text": "food delivery platform"
+    },
+    {
+      "command": "click",
+      "target": "restaurant_id"
+    },
+    {
+      "command": "click",
+      "target": "menu_button_id"
+    },
+    {
+      "command": "click",
+      "target": "dish_id"
+    },
+    {
+      "command": "click",
+      "target": "confirm_order_button_id"
+    },
+    {
+      "command": "type",
+      "target": "delivery_info_input_id",
+      "text": "delivery information"
+    },
+    {
+      "command": "click",
+      "target": "submit_order_button_id"
+    }
+  ]
+}
+
+Please note that you will need to replace the placeholders (restaurant_id, menu_button_id, dish_id, confirm_order_button_id, delivery_info_input_id, and submit_order_button_id) with the actual IDs of the corresponding UI elements on the food delivery platform you are using.
+
+Make sure to adapt the operational definition to match the specific website or application you are interacting with.
+
+Example3: (from ChatGPT template)
+OBJECTIVE: I want to watch movie, given operational definition using JSON format
+------------
+Sure! Here's an example of an operational definition for watching a movie using JSON format:
+{
+  "objective": "Watch a Movie",
+  "description": "The objective is to engage in the activity of watching a movie from start to finish.",
+  "steps": [
+    {
+      "step_number": 1,
+      "step_description": "Choose a movie to watch.",
+      "sub_steps": [
+        "Browse through a list of movies.",
+        "Read reviews or summaries to help make a decision.",
+        "Select a movie that interests you."
+      ]
+    },
+    {
+      "step_number": 2,
+      "step_description": "Prepare the movie watching environment.",
+      "sub_steps": [
+        "Find a comfortable place to sit or lie down.",
+        "Set up a television, computer, or other device to play the movie.",
+        "Ensure the room is adequately dark or dimmed for optimal viewing.",
+        "Adjust the volume to a desired level."
+      ]
+    },
+    {
+      "step_number": 3,
+      "step_description": "Start the movie.",
+      "sub_steps": [
+        "Press play or start the movie on the chosen device.",
+        "Pay attention to the screen and immerse yourself in the movie experience."
+      ]
+    },
+    {
+      "step_number": 4,
+      "step_description": "Watch the movie from start to finish.",
+      "sub_steps": [
+        "Avoid distractions and focus on the movie.",
+        "Engage with the story, characters, and visuals.",
+        "Take breaks if needed, but try to complete the movie in one sitting."
+      ]
+    },
+    {
+      "step_number": 5,
+      "step_description": "Reflect on the movie experience.",
+      "sub_steps": [
+        "Think about the themes, messages, or emotions evoked by the movie.",
+        "Discuss the movie with others if desired.",
+        "Formulate personal opinions or ratings based on your viewing experience."
+      ]
+    }
+  ]
+}
+This JSON defines the objective of watching a movie, provides a description of the objective, and outlines the steps involved in achieving it. Each step is assigned a step number, has a description of the action, and includes sub-steps that further detail the actions required.
