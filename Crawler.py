@@ -21,8 +21,12 @@ class Crawler:
 	def start_trace_action(self):
 		self.browser.tracing.start(screenshots=True, snapshots=True)
 
-	def end_trace_action(self, directory_path, objective):
-		self.browser.tracing.stop(path=os.path.join(directory_path, f"{objective}_trace.zip"))
+	def end_trace_action(self, directory_path):
+		#print(os.path.join(directory_path, f"test_trace.zip"))
+		#self.browser.tracing.stop(path=os.path.join(directory_path, f"test_trace.zip"))
+		trace_file = os.path.join(directory_path, "trace.zip")
+		self.browser.tracing.stop(path=trace_file)
+		self.browser.close()
 
 	def fetch_screenshot(self, directory_path, objective, record_id):
 		directory = os.path.join(directory_path, objective)  # 取得目錄路徑

@@ -8,7 +8,7 @@
 from playwright.sync_api import sync_playwright
 from sys import argv, exit, platform
 from revChatGPT.V1 import Chatbot
-from Cawler import Crawler
+from Crawler import Crawler
 from ChatGPTRecord import ChatGPTRecord
 
 import configparser, time
@@ -88,7 +88,7 @@ def run_cmd(cmd, _crawler):
 
 def print_help():
 	print(
-		"(g) to visit url\n(u) scroll up\n(d) scroll down\n(c) to click\n(t) to type\n" +
+		"(g) to visit url\n(u) scroll up\n(d) scroll down\n(c) to click\n(t) to type\n(e) to exit\n" +
 		"(h) to view commands again\n(r/enter) to run suggested command\n(o) change objective"
 	)
 
@@ -161,16 +161,15 @@ if (__name__ == "__main__"):
 				time.sleep(1)
 			elif command == "o":
 				objective = input("Objective:")
+			elif command == "e":
+				_crawler.end_trace_action(chatGPTRecord.filepath)
+				chatGPTRecord.convert_to_text()
+				exit(0)
 			else:
 				print_help()
-	except KeyboardInterrupt:
-		_crawler.end_trace_action(chatGPTRecord.filepath, chatGPTRecord.objective)
-		print("\n[!] Ctrl+C detected, exiting gracefully.")
-		chatGPTRecord.convert_to_text()
-		exit(0)
 	except Exception as e:
 		print(e)
 		if("code: 500" in str(e)):
 			chatGPTRecord.add_record(gpt_prompt, "OpenAI:  (code: 500)")
 		chatGPTRecord.convert_to_text()
-		_crawler.end_trace_action(chatGPTRecord.filepath, chatGPTRecord.objective)
+		_crawler.end_trace_action(chatGPTRecord.filepath)
